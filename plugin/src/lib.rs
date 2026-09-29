@@ -30,9 +30,10 @@ async fn sync()->Result<(),String>{
  let selected=if c.device_addr.is_empty(){if devices.len()!=1{return Err("请连接一台设备，或在配置中指定 deviceAddr".into())}devices.first()}else{devices.iter().find(|d|d.addr==c.device_addr)};
  let d=selected.ok_or("目标手表未连接")?;
  register::register_interconnect_recv(&d.addr,PKG).await.map_err(|_|"互联注册失败")?;
- let url=format!("https://api.github.com/repos/{}/contents/usage.json?ref={}",c.repository,c.branch);
- let mut request=waki::Client::new().get(&url).header("User-Agent","codex-watch").header("Accept","application/vnd.github.raw+json").connect_timeout(Duration::from_secs(15));
- if !c.token.is_empty(){request=request.header("Authorization",format!("Bearer {}",c.token));}
+ // The repository is public. Read the raw file directly so the watch plugin
+ // does not depend on GitHub API rate limits or a write-capable token.
+ let url=format!("https://raw.githubusercontent.com/{}/{}/usage.json",c.repository,c.branch);
+ let request=waki::Client::new().get(&url).header("User-Agent","codex-watch").connect_timeout(Duration::from_secs(15));
  let response=request.send().map_err(|_|"GitHub 网络请求失败")?;
  if response.status_code()!=200{return Err(format!("GitHub HTTP {}",response.status_code()))}
  let bytes=response.body().map_err(|_|"无法读取快照")?;
