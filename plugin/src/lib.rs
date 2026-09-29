@@ -30,9 +30,10 @@ async fn sync()->Result<(),String>{
  let selected=if c.device_addr.is_empty(){if devices.len()!=1{return Err("请连接一台设备，或在配置中指定 deviceAddr".into())}devices.first()}else{devices.iter().find(|d|d.addr==c.device_addr)};
  let d=selected.ok_or("目标手表未连接")?;
  register::register_interconnect_recv(&d.addr,PKG).await.map_err(|_|"互联注册失败")?;
- // The repository is public. Read the raw file directly so the watch plugin
- // does not depend on GitHub API rate limits or a write-capable token.
- let url=format!("https://raw.githubusercontent.com/{}/{}/usage.json",c.repository,c.branch);
+ // Read the public snapshot through a CDN mirror. The cache-busting query
+ // keeps the watch from displaying an older minute's snapshot.
+ let now=SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+ let url=format!("https://cdn.jsdelivr.net/gh/{}/{}/usage.json?ts={}",c.repository,c.branch,now);
  let request=waki::Client::new().get(&url).header("User-Agent","codex-watch").connect_timeout(Duration::from_secs(15));
  let response=request.send().map_err(|_|"GitHub 网络请求失败")?;
  if response.status_code()!=200{return Err(format!("GitHub HTTP {}",response.status_code()))}
