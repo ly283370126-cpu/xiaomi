@@ -72,9 +72,13 @@ impl event::Guest for Plugin{
   });text_future(String::new())
  }
  fn on_ui_render(id:String)->FutureReader<()>{
+  // Do not borrow through the MutexGuard while calling host UI APIs. AstroBox
+  // may synchronously re-enter the plugin during render; keeping the guard
+  // alive across that call causes the WASM event loop deadlock trap.
+  let status=state().status.clone();
   let root=ui::Element::new(ui::ElementType::Div,None)
    .child(ui::Element::new(ui::ElementType::P,Some("Codex Watch · 实验版")))
-   .child(ui::Element::new(ui::ElementType::P,Some(&state().status)))
+   .child(ui::Element::new(ui::ElementType::P,Some(&status)))
    .child(ui::Element::new(ui::ElementType::Button,Some("导入配置 JSON")).on(ui::Event::Click,"configure"))
    .child(ui::Element::new(ui::ElementType::Button,Some("同步额度")).on(ui::Event::Click,"refresh"));
   ui::render(&id,root);unit_future()
@@ -82,3 +86,4 @@ impl event::Guest for Plugin{
  fn on_card_render(_id:String)->FutureReader<()>{unit_future()}
 }
 export!(Plugin);
+
