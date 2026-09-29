@@ -1,0 +1,1 @@
+{"name":"codex-watch","private":true,"type":"module","scripts":{"test":"node --test","collect":"node collector.mjs --once --local"}}
