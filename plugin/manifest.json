@@ -1,0 +1,1 @@
+{"name":"Codex Watch","icon":"icon.png","version":"0.1.0","description":"GitHub 额度快照同步到 Codex Watch 快应用（实验版）","author":"ly283370126-cpu","website":"https://github.com/ly283370126-cpu/xiaomi","entry":"codex_watch.wasm","wasi_version":2,"api_level":2,"permissions":["network","device","interconnect","register_interconnect_recv"],"additional_files":[]}
