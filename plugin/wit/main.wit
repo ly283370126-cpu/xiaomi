@@ -1,0 +1,11 @@
+package codex:watch;
+world plugin {
+  import astrobox:psys-host/ui;
+  import astrobox:psys-host/device;
+  import astrobox:psys-host/dialog;
+  import astrobox:psys-host/register;
+  import astrobox:psys-host/interconnect;
+  import astrobox:psys-host/timer;
+  export astrobox:psys-plugin/lifecycle;
+  export astrobox:psys-plugin/event;
+}
