@@ -1,5 +1,7 @@
 name: Build fixed plugin only
 on:
+  push:
+    paths: ['plugin/**', 'scripts/package-plugin.py', '.github/workflows/build.yml']
   workflow_dispatch:
 permissions:
   contents: read
