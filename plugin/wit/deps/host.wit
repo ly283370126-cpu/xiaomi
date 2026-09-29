@@ -1,0 +1,30 @@
+package astrobox:psys-host;
+interface ui {
+  enum element-type { BUTTON, INPUT, SELECT, OPTION, IMAGE, VIDEO, AUDIO, SVG, DIV, SPAN, P }
+  enum event { CLICK, HOVER, CHANGE, INPUT, FOCUS, BLUR, MOUSE-ENTER, MOUSE-LEAVE, POINTER-DOWN, POINTER-UP, POINTER-MOVE }
+  resource element {
+    constructor(element-type: element-type, content: option<string>);
+    child: func(child: element) -> element;
+    on: func(event: event, event-id: string) -> element;
+  }
+  render: func(id: string, el: element);
+}
+interface device {
+  record device-info { name: string, addr: string }
+  get-connected-device-list: func() -> future<list<device-info>>;
+}
+interface dialog {
+  record pick-config { read: bool, copy-to: option<string> }
+  record filter-config { multiple: bool, extensions: list<string>, default-directory: string, default-file-name: string }
+  record pick-result { name: string, data: list<u8> }
+  pick-file: func(config: pick-config, filter: filter-config) -> future<pick-result>;
+}
+interface register {
+  register-interconnect-recv: func(addr: string, pkg-name: string) -> future<result>;
+}
+interface interconnect {
+  send-qaic-message: func(device-addr: string, pkg-name: string, data: string) -> future<result>;
+}
+interface timer {
+  set-interval: func(interval-ms: u64, payload: string) -> future<u64>;
+}
