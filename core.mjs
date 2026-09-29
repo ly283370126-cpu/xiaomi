@@ -57,6 +57,10 @@ export async function publish(config, snapshot, token, request=fetch) {
   const path=(config.path||'usage.json').split('/').map(encodeURIComponent).join('/');
   const url=`https://api.github.com/repos/${config.repository}/contents/${path}`;
   const headers={'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'codex-watch'};
+  const metadata=await request(`https://api.github.com/repos/${config.repository}`,{headers,signal:AbortSignal.timeout(20000)});
+  if(!metadata.ok)throw new Error(`GitHub repository HTTP ${metadata.status}`);
+  const repository=await metadata.json();
+  if(repository.private!==true&&config.allowPublicData!==true)throw new Error('Repository is public; make it private or explicitly set allowPublicData=true');
   // Re-read SHA before every write; never replace an unrelated path after a conflict.
   const current=await request(`${url}?ref=${encodeURIComponent(branch)}`,{headers,signal:AbortSignal.timeout(20000)});
   if(current.status!==404&&!current.ok)throw new Error(`GitHub read HTTP ${current.status}`);

@@ -1,1 +1,1 @@
-{"repository":"ly283370126-cpu/xiaomi","branch":"main","path":"usage.json","intervalSeconds":60,"heartbeatSeconds":300,"codexCommand":"codex"}
+{"repository":"ly283370126-cpu/xiaomi","branch":"main","path":"usage.json","intervalSeconds":60,"heartbeatSeconds":300,"codexCommand":"codex","allowPublicData":false}

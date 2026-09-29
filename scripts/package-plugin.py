@@ -2,6 +2,7 @@
 import struct
 import zlib
 import zipfile
+import sys
 from pathlib import Path
 root = Path(__file__).resolve().parent.parent
 def chunk(kind, data):
@@ -15,6 +16,11 @@ for y in range(size):
         mark = (25 <= x <= 32 and 26 <= y <= 70) or (25 <= x <= 69 and (26 <= y <= 32 or 64 <= y <= 70))
         rows.extend((235, 247, 255, 255) if mark else (15, 96 + y, 210, 255))
 png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b'')
+icon = root / 'watch/src/common/icon.png'
+icon.parent.mkdir(parents=True, exist_ok=True)
+icon.write_bytes(png)
+if '--icon-only' in sys.argv:
+    raise SystemExit(0)
 dist = root / 'dist'
 dist.mkdir(exist_ok=True)
 wasm = root / 'plugin/target/wasm32-wasip2/release/codex_watch.wasm'

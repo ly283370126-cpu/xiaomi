@@ -5,3 +5,11 @@ state.json
 node_modules/
 target/
 sign/
+*.dpapi
+node-path.txt
+*.tmp
+watch/build/
+watch/dist/
+.temp_watch/
+dist/
+*.zip
