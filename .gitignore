@@ -1,0 +1,7 @@
+config.json
+usage.json
+state.json
+*.log
+node_modules/
+target/
+sign/
