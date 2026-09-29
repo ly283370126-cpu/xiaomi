@@ -1,0 +1,78 @@
+<template>
+  <div class="screen" onclick="refresh">
+    <text class="brand">CODEX</text>
+    <text class="subtitle">剩余额度</text>
+    <div class="row"><text class="label">5 小时</text><text class="value">{{five}}</text></div>
+    <div class="track"><div class="fill" style="width: {{fiveWidth}}px;"></div></div>
+    <text class="reset">{{fiveReset}}</text>
+    <div class="row"><text class="label">本周</text><text class="value">{{week}}</text></div>
+    <div class="track"><div class="fill" style="width: {{weekWidth}}px;"></div></div>
+    <text class="reset">{{weekReset}}</text>
+    <text class="age">{{age}}</text>
+    <text class="hint">点击刷新 · {{connection}}</text>
+  </div>
+</template>
+<script>
+import interconnect from '@system.interconnect'
+import file from '@system.file'
+let channel = null
+let snapshot = null
+let timer = null
+const cache = 'internal://files/codex-quota.json'
+function valid(s) {
+  if (!s || s.schemaVersion !== 1 || s.provider !== 'codex' || !Number.isFinite(s.collectedAt)) return false
+  return ['fiveHour', 'weekly'].every(k => s[k] === null || (s[k] && Number.isFinite(s[k].remainingPercent) && s[k].remainingPercent >= 0 && s[k].remainingPercent <= 100 && Number.isFinite(s[k].resetsAt)))
+}
+function resetText(w) {
+  if (!w) return '该窗口不可用'
+  const m = Math.ceil((w.resetsAt * 1000 - Date.now()) / 60000)
+  if (m <= 0) return '已到重置时间 · 待更新'
+  return m >= 1440 ? Math.floor(m / 1440) + '天 ' + Math.floor(m % 1440 / 60) + '小时后重置' : Math.floor(m / 60) + '小时 ' + m % 60 + '分钟后重置'
+}
+export default {
+  data: { five: '--', week: '--', fiveWidth: 0, weekWidth: 0, fiveReset: '等待首次同步', weekReset: '', age: '尚无数据', connection: '等待 AstroBox' },
+  onInit() {
+    file.readText({uri:cache, success:r => {try {const s=JSON.parse(r.text);if(valid(s)&&(!snapshot||s.collectedAt>snapshot.collectedAt)){snapshot=s;this.renderSnapshot()}}catch(e){} }})
+    try {
+      channel=interconnect.instance()
+      channel.onopen=()=>{this.connection='已连接';this.refresh()}
+      channel.onclose=()=>{this.connection='已断开'}
+      channel.onerror=()=>{this.connection='连接异常'}
+      channel.onmessage=r=>{
+        try {
+          const s=JSON.parse(r.data)
+          if(!valid(s)||snapshot&&s.collectedAt<snapshot.collectedAt)return
+          snapshot=s;this.connection='已同步';this.renderSnapshot()
+          file.writeText({uri:cache,text:JSON.stringify(s)})
+        }catch(e){}
+      }
+    } catch(e) {this.connection='互联不可用'}
+  },
+  onShow() {this.renderSnapshot();this.refresh();if(!timer)timer=setInterval(()=>this.renderSnapshot(),15000)},
+  onHide() {if(timer)clearInterval(timer);timer=null},
+  onDestroy() {if(timer)clearInterval(timer);timer=null;if(channel){channel.onmessage=null;channel.onopen=null;channel.onclose=null;channel.onerror=null}channel=null},
+  refresh() {if(channel)channel.send({data:{type:'codex-refresh'}})},
+  renderSnapshot() {
+    if(!snapshot)return
+    const a=snapshot.fiveHour,b=snapshot.weekly
+    this.five=a?a.remainingPercent+'%':'--';this.week=b?b.remainingPercent+'%':'--'
+    this.fiveWidth=a?Math.round(a.remainingPercent*3.36):0;this.weekWidth=b?Math.round(b.remainingPercent*3.36):0
+    this.fiveReset=resetText(a);this.weekReset=resetText(b)
+    const minutes=Math.max(0,Math.floor((Date.now()/1000-snapshot.collectedAt)/60))
+    this.age=minutes<1?'数据刚刚更新':minutes+'分钟前的数据'+(minutes>=10?' · 可能已过期':'')
+  }
+}
+</script>
+<style>
+.screen {width:432px;height:514px;background-color:#000000;flex-direction:column;padding:34px 48px;}
+.brand {font-size:30px;color:#65cfff;font-weight:bold;}
+.subtitle {font-size:18px;color:#788b9a;margin-top:4px;margin-bottom:18px;}
+.row {width:336px;height:52px;align-items:center;justify-content:space-between;}
+.label {font-size:23px;color:#dce9f4;}
+.value {font-size:42px;color:#55c8ff;font-weight:bold;}
+.track {width:336px;height:12px;background-color:#152434;border-radius:6px;margin-top:7px;}
+.fill {height:12px;background-color:#38baff;border-radius:6px;}
+.reset {font-size:17px;color:#8297a8;margin-top:9px;margin-bottom:18px;}
+.age {font-size:17px;color:#a5bac9;margin-top:15px;}
+.hint {font-size:15px;color:#617887;margin-top:8px;}
+</style>
