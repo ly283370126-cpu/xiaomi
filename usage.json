@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "provider": "codex",
+  "collectedAt": 1790687609,
+  "fiveHour": {
+    "usedPercent": 58,
+    "remainingPercent": 42,
+    "resetsAt": 1790699906
+  },
+  "weekly": {
+    "usedPercent": 51,
+    "remainingPercent": 49,
+    "resetsAt": 1791164654
+  }
+}
