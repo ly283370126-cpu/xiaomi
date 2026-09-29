@@ -1,14 +1,21 @@
-name: Collector tests only - device packages withdrawn
+name: Build fixed plugin only
 on:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  collector:
+  plugin:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Install Rust WASI target
+        run: rustup update stable && rustup target add wasm32-wasip2
+      - name: Compile plugin
+        working-directory: plugin
+        run: cargo build --release --target wasm32-wasip2
+      - name: Package ABP
+        run: python3 scripts/package-plugin.py
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: '24'
-      - run: node --test core.test.mjs
+          name: CodexWatch-ABP-fixed
+          path: dist/CodexWatch.abp
