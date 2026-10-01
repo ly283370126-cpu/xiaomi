@@ -1,21 +1,12 @@
 """Build an ABP from the compiled WASI component. Contains no configuration."""
-import struct
-import zlib
+import base64
 import zipfile
 import sys
 from pathlib import Path
 root = Path(__file__).resolve().parent.parent
-def chunk(kind, data):
-    return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
-size = 96
-rows = bytearray()
-for y in range(size):
-    rows.append(0)
-    for x in range(size):
-        # Original blue badge, not an official OpenAI application icon.
-        mark = (25 <= x <= 32 and 26 <= y <= 70) or (25 <= x <= 69 and (26 <= y <= 32 or 64 <= y <= 70))
-        rows.extend((235, 247, 255, 255) if mark else (15, 96 + y, 210, 255))
-png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b'')
+# User-provided Codex/OpenAI knot logo. Keep the same asset for the plugin
+# icon and the watch app; never regenerate the old blue C badge.
+png = base64.b64decode('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')
 icon = root / 'watch/src/common/icon.png'
 icon.parent.mkdir(parents=True, exist_ok=True)
 icon.write_bytes(png)
@@ -31,3 +22,4 @@ with zipfile.ZipFile(dist / 'CodexWatch.abp', 'w', zipfile.ZIP_DEFLATED) as out:
     out.write(root / 'plugin/manifest.json', 'manifest.json')
     out.writestr('icon.png', png)
 print('Built dist/CodexWatch.abp')
+
